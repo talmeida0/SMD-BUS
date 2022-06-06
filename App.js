@@ -8,6 +8,8 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
+  Label,
+  ActivityIndicator,
   Button,
   Dimensions,
 } from 'react-native';
@@ -126,6 +128,17 @@ function AlarmScreen() {
 function AccountScreen({ navigation }) {
   return (
     <View style={styles.container}>
+      
+      <Text style={styles.text}>Usuário:</Text>
+      <Text style={styles.appText}>eve.holt@reqres.in</Text>
+
+      <Text style={styles.text}>Nome:</Text>
+      <Text style={styles.appText}> Elaine Veholt</Text>
+
+      
+      <Text style={styles.text}>Senha:</Text>
+      <Text style={styles.appText}> ******** </Text>
+
       <TouchableOpacity
         style={styles.appBotao}
         onPress={() => navigation.navigate('Login')}>
@@ -149,29 +162,90 @@ function FeedScreen({ navigation }) {
 
 // LOGIN DO APP
 
+async function validateLogin(user,password,statusSetter,activitySetter){
+    activitySetter(true)
+
+    var obj = { "email": user,
+                "password":password};
+
+    console.log(obj)
+
+    await fetch(
+      'https://reqres.in/api/login', 
+      {
+          method: 'POST',
+          headers: 
+          {
+             Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(obj)
+      }).then(response => {
+          if (response.status === 200) {
+            statusSetter('Clique aqui para entrar')
+            response.text().then(function(result){ 
+              console.log(result); 
+              });
+            
+            activitySetter(false)
+          } else {
+            statusSetter('Usuário Incorreto')
+          }
+          activitySetter(false)
+      })
+      .then(response => {
+        console.debug(response);
+      }).catch(error => {
+        console.error(error);
+      });
+}
+
 function LoginScreen({ navigation }) {
+  
+  const [user,setUser]=React.useState('')
+  const [password,setPassword]=React.useState('')
+  const [status,setStatus]=React.useState('')
+  const [activity,setActivity]=React.useState(false)
+
   return (
     <View style={styles.container}>
+      
       <Image source={require('./assets/StopBus+.png')} style={styles.logo} />
 
       <Text style={styles.text}>Usuário:</Text>
-      <TextInput style={styles.input} placeholder="Digite seu usuário" />
+      <TextInput 
+        style={styles.input} 
+        placeholder="Digite seu usuário" 
+        clearButtonMode = "always"
+        onChangeText={(value) => setUser(value)}
+      />
 
       <Text style={styles.text}>Senha:</Text>
       <TextInput
         style={styles.input}
         secureTextEntry={true}
         placeholder="Digite sua senha"
+        clearButtonMode = "always"
+        onChangeText={(value) => setPassword(value)}
       />
 
       <TouchableOpacity
         style={styles.botao}
-        onPress={() => navigation.navigate('Home')}>
-        <Text style={styles.text}>Login</Text>
+        onPress={() => 
+          validateLogin(user,password,setStatus,setActivity)}>
+        <Text style={styles.text}>Validar</Text>
       </TouchableOpacity>
+
+      <View style={{marginTop:10}}>
+        <ActivityIndicator size="large" animating={activity}/>
+      </View>
+
+      <Text 
+        style={styles.appText}
+        onPress={() => navigation.navigate('Home')}> {status} </Text>
     </View>
   );
-}
+} 
 
 //NAVEGAÇÃO
 
@@ -272,7 +346,7 @@ const styles = StyleSheet.create({
   },
   search: {
     width: Dimensions.get('window').width,
-    height: 650,
+    height: 700,
     backgroundColor: 'white',
   },
   distance: {
